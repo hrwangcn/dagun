@@ -197,12 +197,12 @@ function getSuqares(index) {
 			[matrix[i][j], matrix[i][j + 1], matrix[i + 1][j], matrix[i + 1][j + 1]];
 	}
 	if (i > 0 && j + 1 < matrix[0].length) {
-		// 左下角子矩阵
+		// 右上角子矩阵
 		squares.ld =
 			[matrix[i - 1][j], matrix[i - 1][j + 1], matrix[i][j], matrix[i][j + 1]];
 	}
 	if (i + 1 < matrix.length && j > 0) {
-		// 右上角子矩阵
+		// 左下角子矩阵
 		squares.rt =
 			[matrix[i][j - 1], matrix[i][j], matrix[i + 1][j - 1], matrix[i + 1][j]];
 	}
@@ -213,4 +213,137 @@ function getSuqares(index) {
 	}
 	// console.log(index,squares);
 	return squares;
+}
+
+class Board extends Array {
+	constructor(...args) {
+		super(...args);
+		this.reshape = (rows, cols) => {
+			if (rows * cols === this.length) {
+				let result = [];
+				for (let i = 0; i < rows; i++) {
+					result[i] = this.slice(i * cols, i * cols + cols)
+				}
+				return result;
+			}
+			else {
+				throw new Error("Shape Error!");
+			}
+		}
+	}
+}
+
+class Utils {
+	constructor() { }
+	//检查棋盘是否全满
+	static isBoardFull = board => {
+		return !board.some(value => value === 0);
+	}
+	//获取棋子所在行
+	static getRow = (board, index) => {
+		return board.reshape(5, 5)[index / 5 | 0];
+	}
+	//获取棋子所在列
+	static getCol = (board, index) => {
+		return board.reshape(5, 5).map(row => row[index % 5]);
+	}
+	//左上到右下斜线
+	static getLeftup2Rightdown = (board, index) => {
+		return board.filter((_, i) => (i % 5 - (i / 5 | 0)) === (Math.floor(index % 5) - Math.floor(index / 5)));
+	}
+	//右上到左下斜线
+	static getRightup2Leftdown = (board, index) => {
+		return board.filter((_, i) => (i % 5 + (i / 5 | 0)) === (Math.floor(index % 5) + Math.floor(index / 5)));
+	}
+	//第一象限
+	static getQuadrant1 = (board, index) => {
+		if ((index / 5 | 0) > 0 && (index % 5) + 1 < 5) {
+			return [board[index], board[index + 1], board[index - 4], board[index - 5]];
+		}
+		return undefined;
+	}
+	//第二象限
+	static getQuadrant2 = (board, index) => {
+		if ((index / 5 | 0) > 0 && (index % 5) > 0) {
+			return [board[index], board[index - 5], board[index - 6], board[index - 1]];
+		}
+		return undefined;
+	}
+	//第三象限
+	static getQuadrant3 = (board, index) => {
+		if ((index / 5 | 0) + 1 < 5 && (index % 5) > 0) {
+			return [board[index], board[index - 1], board[index + 4], board[index + 5]];
+		}
+		return undefined;
+	}
+	//第四象限
+	static getQuadrant4 = (board, index) => {
+		if ((index / 5 | 0) + 1 < 5 && (index % 5) + 1 < 5) {
+			return [board[index], board[index + 5], board[index + 6], board[index + 1]];
+		}
+		return undefined;
+	}
+}
+
+class Game {
+	constructor(rule) {
+		if (rule) {
+			this.rule = rule;
+		} else {
+			this.rule = { 'sanxie': 1, 'sixie': 1, 'dagun': 2, 'fang': 1, 'tong': 3 }
+		}
+		this.board = new Board(25).fill(0);
+		this.holder = 0; //执手方，1黑-1白0无
+		this.stage = 0; //游戏阶段，1布子2摘子3行子
+		this.status = false; //游戏运行状态 true 运行中，false游戏停止
+		this.actionType = 0; //动作类型 落子1 提子-1
+		this.walker = -1; //行子阶段的待行之子 0-24数字
+		this.winner = 0; //赢家
+	}
+	start() {
+		this.holder = 1;
+		this.stage = 1;
+		this.status = true;
+		this.actionType = 1;
+	}
+
+	act(location) {
+		//处于布子阶段
+		if (this.stage === 1) {
+			//落子行为
+			if (this.actionType === 1) {
+				//检查该坐标是否可以落子
+				if (board[location] === 0) {
+					//更新board内容
+					board[location] = this.holder;
+					//更新actionType
+					this.actionType = getNextType();
+					//更新stage
+					this.stage = getStage();
+					//更新status
+					this.status = getStatus();
+					//更新winner
+					this.winner = getWinner();
+					//更新执手方
+					this.holder *= -1;
+					//提示日志
+					console.log(`Successful Dropped to ${location}`);
+					return true;
+				} else {
+					console.log(`${location} is not Empty`);
+					return false;
+				}
+			}
+			if(this.actionType === -1){
+				//该坐标可以提子
+				if(isRemovable(location)){
+					//更新board内容
+					board[location] = 0;
+					//
+				}
+			}
+
+		}
+	}
+
 }
