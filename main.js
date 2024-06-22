@@ -287,7 +287,7 @@ class Utils {
 
 class Player{
 	static BLACK =  1;
-	static WATCH =  0;
+	static EMPTY =  0;
 	static WHITE = -1;
 	constructor(type,isHolding){
 		this.type = type;
@@ -301,7 +301,7 @@ class Action {
 	static APPEND = 0; //落子  赢、开启下一阶段
 	static REMOVE = 1; //提子
 	static SELECT = 2; //选中棋子待行
-	static MOVETO = 3; //待行子行动到指定位置
+	static MOVING = 3; //待行子行动到指定位置
 	constructor(options){
 		this.type = options.type;
 		this.target = options.target || null;
@@ -333,10 +333,37 @@ class Game {
 	shiftHolder(){
 		for(p of players){ p.isHolding = !p.isHolding }
 	}
+	
+	getHolder(){
+		for(p of players){ 
+			if(p.isHolding){
+				return p;
+			}
+		}
+	}
 
 	//执行玩家指令
 	excute(action) {
-		
+		if(action.type === Action.APPEND){ //执行落子
+			this.board[action.target] = getHolder().type;
+			//检查是否有赢家、检查是否有成项、是否切换玩家
+		}
+
+		if(action.type === Action.MOVING){ //移动一子
+			this.board[action.target] = this.board[action.origin];
+			this.board[action.origin] = 0;
+			//检查是否有赢家、检查是否有成项、是否切换玩家
+		}
+
+		if(action.type === Action.REMOVE){ //执行摘子
+			this.board[action.target] = 0;
+			//检查是否有赢家、摘子是否结束、是否切换玩家
+		}
+
+		if(action.type === Action.SELECT){ //选中一子
+			this.walker = action.target;
+		}
+
 	}
 
 }
