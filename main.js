@@ -285,6 +285,31 @@ class Utils {
 	}
 }
 
+class Player{
+	static BLACK =  1;
+	static WATCH =  0;
+	static WHITE = -1;
+	constructor(type,isHolding){
+		this.type = type;
+		this.removes = 0; //剩余摘子次数
+		this.isWinner = false; //是否赢得了本场游戏
+		this.isHolding = isHolding; //处于执手状态
+	}
+}
+
+class Action {
+	static APPEND = 0; //落子  赢、开启下一阶段
+	static REMOVE = 1; //提子
+	static SELECT = 2; //选中棋子待行
+	static MOVETO = 3; //待行子行动到指定位置
+	constructor(options){
+		this.type = options.type;
+		this.target = options.target || null;
+		this.origin = options.origin || null;
+	}
+	
+}
+
 class Game {
 	constructor(rule) {
 		if (rule) {
@@ -293,57 +318,25 @@ class Game {
 			this.rule = { 'sanxie': 1, 'sixie': 1, 'dagun': 2, 'fang': 1, 'tong': 3 }
 		}
 		this.board = new Board(25).fill(0);
-		this.holder = 0; //执手方，1黑-1白0无
 		this.stage = 0; //游戏阶段，1布子2摘子3行子
 		this.status = false; //游戏运行状态 true 运行中，false游戏停止
-		this.actionType = 0; //动作类型 落子1 提子-1
 		this.walker = -1; //行子阶段的待行之子 0-24数字
-		this.winner = 0; //赢家
+		this.winner = null; //赢家
 	}
+	//开启游戏
 	start() {
-		this.holder = 1;
 		this.stage = 1;
 		this.status = true;
-		this.actionType = 1;
+		this.players = [new Player(Player.BLACK,true),new Player(Player.WHITE,false)];
+	}
+	//切换执手方
+	shiftHolder(){
+		for(p of players){ p.isHolding = !p.isHolding }
 	}
 
-	act(location) {
-		//处于布子阶段
-		if (this.stage === 1) {
-			//落子行为
-			if (this.actionType === 1) {
-				//检查该坐标是否可以落子
-				if (board[location] === 0) {
-					//更新board内容
-					board[location] = this.holder;
-					//更新actionType
-					this.actionType = getNextType();
-					//更新stage
-					this.stage = getStage();
-					//更新status
-					this.status = getStatus();
-					//更新winner
-					this.winner = getWinner();
-					//更新执手方
-					this.holder *= -1;
-					//提示日志
-					console.log(`Successful Dropped to ${location}`);
-					return true;
-				} else {
-					console.log(`${location} is not Empty`);
-					return false;
-				}
-			}
-			if(this.actionType === -1){
-				//该坐标可以提子
-				if(isRemovable(location)){
-					//更新board内容
-					board[location] = 0;
-					//
-				}
-			}
-
-		}
+	//执行玩家指令
+	excute(action) {
+		
 	}
 
 }
