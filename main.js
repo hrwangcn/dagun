@@ -285,11 +285,11 @@ class Utils {
 	}
 }
 
-class Player{
-	static BLACK =  1;
-	static EMPTY =  0;
+class Player {
+	static BLACK = 1;
+	static EMPTY = 0;
 	static WHITE = -1;
-	constructor(type,isHolding){
+	constructor(type, isHolding) {
 		this.type = type;
 		this.removes = 0; //剩余摘子次数
 		this.isWinner = false; //是否赢得了本场游戏
@@ -302,7 +302,8 @@ class Action {
 	static REMOVE = 1; //提子
 	static SELECT = 2; //选中棋子待行
 	static MOVING = 3; //待行子行动到指定位置
-	constructor(options){
+
+	constructor(options) {
 		this.type = options.type;
 		this.target = options.target || null;
 		this.origin = options.origin || null;
@@ -311,6 +312,13 @@ class Action {
 }
 
 class Game {
+	static NOTRUN = 0;
+	static APPEND = 1;
+	static REMOVE = 2;
+	static MOVING = 3;
+
+	static RUN = true;
+	static END = false;
 	constructor(rule) {
 		if (rule) {
 			this.rule = rule;
@@ -318,45 +326,80 @@ class Game {
 			this.rule = { 'sanxie': 1, 'sixie': 1, 'dagun': 2, 'fang': 1, 'tong': 3 }
 		}
 		this.board = new Board(25).fill(0);
-		this.stage = 0; //游戏阶段，1布子2摘子3行子
-		this.status = false; //游戏运行状态 true 运行中，false游戏停止
+		this.stage = Game.NOTRUN; //游戏阶段，1布子2摘子3行子
+		this.status = Game.END; //游戏运行状态 true 运行中，false游戏停止
 		this.walker = -1; //行子阶段的待行之子 0-24数字
 		this.winner = null; //赢家
 	}
 	//开启游戏
 	start() {
-		this.stage = 1;
-		this.status = true;
-		this.players = [new Player(Player.BLACK,true),new Player(Player.WHITE,false)];
+		this.stage = Game.APPEND;
+		this.status = Game.RUN;
+		this.players = [new Player(Player.BLACK, true), new Player(Player.WHITE, false)];
 	}
 	//切换执手方
-	shiftHolder(){
-		players.every(player => player.isHolding = !player.isHolding);
+	shiftHolder() {
+		this.players.every(player => player.isHolding = !player.isHolding);
+	}
+	//获取当前执手方
+	getHolder() {
+		this.players.find(player => player.isHolding);
+	}
+	//将执手方设置为某一方
+	setHolder(type){
+		this.players.find(player => player.type === type).isHolding = true;
+		this.players.find(player => player.type != type).isHolding = false;
 	}
 
-	getHolder(){
-		players.find(player => player.isHolding);
+	//将事件转化为Action
+	getAction(location) {
+		//落子，Game处于APPEND 两个Player的removes都为0 board此处为0
+		if (this.stage === Game.APPEND &&
+			this.players.every(player => player.removes === 0) &&
+			this.board[location] === 0) {
+			return new Action({ type: Action.APPEND, target: location });
+		}
+		//提子，Game不处于NOTRUN阶段，存在player的removes大于0，board此处为敌子
+		if (this.stage != NOTRUN &&
+			this.players.some(player => player.removes > 0) &&
+			this.board[location] === -this.getHolder().type) {
+			return new Action({ type: Action.REMOVE, target: location });
+		}
+		//选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军
+		if (this.stage === Game.MOVING &&
+			this.walker === -1 &&
+			this.board[location] === this.getHolder().type) {
+			return new Action({ type: Action.SELECT, target: location });
+		}
+		//行子，Game处于MOVING阶段，Game.walker不为-1，board[Game.walker]是友军，board[location]为0
+		if (this.stage === Game.MOVING &&
+			this.walker != -1 &&
+			board[this.walker] === this.getHolder().type &&
+			board[location] === 0) {
+			return new Action({ type: Action.MOVING, target: location, origin: this.walker });
+		}
+		throw new Error("不是正确的操作");
 	}
 
 	//执行玩家指令
 	excute(action) {
-		if(action.type === Action.APPEND){ //执行落子
+		if (action.type === Action.APPEND) { //执行落子
 			this.board[action.target] = getHolder().type;
-			//检查是否有赢家、检查是否有成项、是否切换玩家
+			//检查是否有赢家、检查是否有成项、是否切换玩家、是否进入摘子（白子先摘）
 		}
 
-		if(action.type === Action.MOVING){ //移动一子
+		if (action.type === Action.MOVING) { //移动一子
 			this.board[action.target] = this.board[action.origin];
 			this.board[action.origin] = 0;
 			//检查是否有赢家、检查是否有成项、是否切换玩家
 		}
 
-		if(action.type === Action.REMOVE){ //执行摘子
+		if (action.type === Action.REMOVE) { //执行摘子
 			this.board[action.target] = 0;
-			//检查是否有赢家、摘子是否结束、是否切换玩家
+			//检查是否有赢家、摘子是否结束（无法继续摘子或结束归零）、是否切换玩家、是否开启下一阶段
 		}
 
-		if(action.type === Action.SELECT){ //选中一子
+		if (action.type === Action.SELECT) { //选中一子
 			this.walker = action.target;
 		}
 

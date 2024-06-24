@@ -15,13 +15,10 @@ Game {
 
     函数
 
-    action(location) //针对location执行动作 
+    excute(action) //执行一个动作 
     //动作举例：黑方提子位置8、白方落子位置6、黑方选中位置3、黑方行子位置2
 
-    doLuozi(location) //在location处落子
-    doQuzi(location) //在location除提子
-
-    getAllActions() //所有可以执行的策略
+    getAction(location) //将前端激发转化为Action
 
     isDropable(location) //location坐标能否落子
     isRemovable(location) //location坐标能否提子
