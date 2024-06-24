@@ -307,7 +307,7 @@ class Action {
 		this.target = options.target || null;
 		this.origin = options.origin || null;
 	}
-	
+
 }
 
 class Game {
@@ -331,15 +331,11 @@ class Game {
 	}
 	//切换执手方
 	shiftHolder(){
-		for(p of players){ p.isHolding = !p.isHolding }
+		players.every(player => player.isHolding = !player.isHolding);
 	}
-	
+
 	getHolder(){
-		for(p of players){ 
-			if(p.isHolding){
-				return p;
-			}
-		}
+		players.find(player => player.isHolding);
 	}
 
 	//执行玩家指令
