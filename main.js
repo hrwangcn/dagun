@@ -283,6 +283,30 @@ class Utils {
 		}
 		return undefined;
 	}
+
+	//两个位置是否相邻
+	static isNeighbour(walker, location) {
+		if (location === walker - 5 || location === walker + 5) {
+			return true;
+		} else if (location / 5 | 0 === walker / 5 | 0) {
+			if (location === walker - 1 || location === walker + 1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	//location处是否可行
+	static isMovable(board, location) {
+		if (board[location - 5] === 0 || board[location + 5] === 0) {
+			return true;
+		} else if ((location - 1) / 5 | 0 === location / 5 | 0) {
+			if (board[location - 1] === 0) return true;
+		}else if((location + 1) / 5 | 0 === location / 5 | 0){
+			if (board[location + 1] === 0) return true;
+		}
+		return false;
+	}
 }
 
 class Player {
@@ -346,7 +370,7 @@ class Game {
 		this.players.find(player => player.isHolding);
 	}
 	//将执手方设置为某一方
-	setHolder(type){
+	setHolder(type) {
 		this.players.find(player => player.type === type).isHolding = true;
 		this.players.find(player => player.type != type).isHolding = false;
 	}
@@ -365,17 +389,17 @@ class Game {
 			this.board[location] === -this.getHolder().type) {
 			return new Action({ type: Action.REMOVE, target: location });
 		}
-		//选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军
+		//选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军，location可行
 		if (this.stage === Game.MOVING &&
-			this.walker === -1 &&
+			this.walker === -1 && Utils.isMovable(this.board,location) &&
 			this.board[location] === this.getHolder().type) {
 			return new Action({ type: Action.SELECT, target: location });
 		}
-		//行子，Game处于MOVING阶段，Game.walker不为-1，board[Game.walker]是友军，board[location]为0
-		if (this.stage === Game.MOVING &&
-			this.walker != -1 &&
-			board[this.walker] === this.getHolder().type &&
-			board[location] === 0) {
+		//行子，Game处于MOVING阶段，Game.walker不为-1，
+		// board[Game.walker]是友军，board[location]为0,location和walker相邻
+		if (this.stage === Game.MOVING && this.walker != -1 && this.board[location] === 0 &&
+			Utils.isNeighbour(this.walker, location) &&
+			this.board[this.walker] === this.getHolder().type) {
 			return new Action({ type: Action.MOVING, target: location, origin: this.walker });
 		}
 		throw new Error("不是正确的操作");
@@ -403,6 +427,41 @@ class Game {
 			this.walker = action.target;
 		}
 
+	}
+
+	//判断输赢
+	findWinner() {
+		//落子阶段确认赢家，一方的棋子个数大于13个
+		if (this.stage === Game.APPEND) {
+			if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) > 13) {
+				return this.players.find(player => player.type = Player.BLACK);
+			}
+			if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) > 13) {
+				return this.players.find(player => player.type = Player.WHITE);
+			}
+			return null;
+		}
+		//摘子阶段和行子阶段少子判负
+		if (this.stage === Game.REMOVE || this.stage === Game.MOVING) {
+			if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) < 3) {
+				return this.players.find(player => player.type = Player.WHITE);
+			}
+			if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) < 3) {
+				return this.players.find(player => player.type = Player.BLACK);
+			}
+		}
+		//行子阶段，闷杀
+		if (this.stage === Game.MOVING) {
+			//黑子不可移动，赢家是白子
+			if(!board.some(value,i => value === Player.BLACK && Utils.isMovable(this.board,i))){
+				return this.players.find(player => player.type = Player.WHITE);
+			}
+			//白子不可移动，赢家是黑子
+			if(!board.some(value,i => value === Player.WHITE && Utils.isMovable(this.board,i))){
+				return this.players.find(player => player.type = Player.BLACK);
+			}
+		}
+		return null;
 	}
 
 }
