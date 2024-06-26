@@ -302,7 +302,7 @@ class Utils {
 			return true;
 		} else if ((location - 1) / 5 | 0 === location / 5 | 0) {
 			if (board[location - 1] === 0) return true;
-		}else if((location + 1) / 5 | 0 === location / 5 | 0){
+		} else if ((location + 1) / 5 | 0 === location / 5 | 0) {
 			if (board[location + 1] === 0) return true;
 		}
 		return false;
@@ -340,9 +340,6 @@ class Game {
 	static APPEND = 1;
 	static REMOVE = 2;
 	static MOVING = 3;
-
-	static RUN = true;
-	static END = false;
 	constructor(rule) {
 		if (rule) {
 			this.rule = rule;
@@ -351,14 +348,12 @@ class Game {
 		}
 		this.board = new Board(25).fill(0);
 		this.stage = Game.NOTRUN; //游戏阶段，1布子2摘子3行子
-		this.status = Game.END; //游戏运行状态 true 运行中，false游戏停止
 		this.walker = -1; //行子阶段的待行之子 0-24数字
 		this.winner = null; //赢家
 	}
 	//开启游戏
 	start() {
 		this.stage = Game.APPEND;
-		this.status = Game.RUN;
 		this.players = [new Player(Player.BLACK, true), new Player(Player.WHITE, false)];
 	}
 	//切换执手方
@@ -367,7 +362,7 @@ class Game {
 	}
 	//获取当前执手方
 	getHolder() {
-		this.players.find(player => player.isHolding);
+		return this.players.find(player => player.isHolding);
 	}
 	//将执手方设置为某一方
 	setHolder(type) {
@@ -384,14 +379,14 @@ class Game {
 			return new Action({ type: Action.APPEND, target: location });
 		}
 		//提子，Game不处于NOTRUN阶段，存在player的removes大于0，board此处为敌子
-		if (this.stage != NOTRUN &&
+		if (this.stage != Game.NOTRUN &&
 			this.players.some(player => player.removes > 0) &&
 			this.board[location] === -this.getHolder().type) {
 			return new Action({ type: Action.REMOVE, target: location });
 		}
 		//选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军，location可行
 		if (this.stage === Game.MOVING &&
-			this.walker === -1 && Utils.isMovable(this.board,location) &&
+			this.walker === -1 && Utils.isMovable(this.board, location) &&
 			this.board[location] === this.getHolder().type) {
 			return new Action({ type: Action.SELECT, target: location });
 		}
@@ -453,15 +448,56 @@ class Game {
 		//行子阶段，闷杀
 		if (this.stage === Game.MOVING) {
 			//黑子不可移动，赢家是白子
-			if(!board.some(value,i => value === Player.BLACK && Utils.isMovable(this.board,i))){
+			if (!board.some(value, i => value === Player.BLACK && Utils.isMovable(this.board, i))) {
 				return this.players.find(player => player.type = Player.WHITE);
 			}
 			//白子不可移动，赢家是黑子
-			if(!board.some(value,i => value === Player.WHITE && Utils.isMovable(this.board,i))){
+			if (!board.some(value, i => value === Player.WHITE && Utils.isMovable(this.board, i))) {
 				return this.players.find(player => player.type = Player.BLACK);
 			}
 		}
 		return null;
+	}
+
+	//格点是否成项点
+	isItemPoint(location) {
+		let relatedVectors = getRelatedVectors(location);
+		return relatedVectors.some(vector => {
+			vector.length > 3 && vector.every(piece => piece === vector[0])
+		});
+	}
+
+	//确认落子参与哪些成项
+	getItems(location) {
+		let items = { 'sanxie': 0, 'sixie': 0, 'dagun': 0, 'fang': 0, 'tong': 0 };
+		let relatedVectors = getRelatedVectors(location);
+		relatedVectors.forEach((vector, index) => {
+			if (vector && vector.every(piece => piece === vector[0])) {
+				switch (index) {
+					case 0 || 1: items.dagun++; break; //行列
+					case 2 || 3: switch (vector.length) {  //正斜、反斜
+						case 3: items.sanxie++; break;
+						case 4: items.sixie++; break;
+						case 5: items.tong++; break;
+					}; break;
+					case 4 || 5 || 6 || 7: items.fang++; break; //小方
+				}
+			}
+		});
+	}
+
+	//获取格点相关向量
+	getRelatedVectors(location) {
+		return [
+			Utils.getCol(this.board, location),
+			Utils.getRow(this.board, location),
+			Utils.getLeftup2Rightdown(this.board, location),
+			Utils.getRightup2Leftdown(this.board, location),
+			Utils.getQuadrant1(this.board, location),
+			Utils.getQuadrant2(this.board, location),
+			Utils.getQuadrant3(this.board, location),
+			Utils.getQuadrant4(this.board, location)
+		];
 	}
 
 }
