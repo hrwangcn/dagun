@@ -236,52 +236,60 @@ class Board extends Array {
 class Utils {
 	constructor() { }
 	//检查棋盘是否全满
-	static isBoardFull = board => {
+	static isBoardFull(board) {
 		return !board.some(value => value === 0);
 	}
 	//获取棋子所在行
-	static getRow = (board, index) => {
+	static getRow(board, index) {
 		return board.reshape(5, 5)[index / 5 | 0];
 	}
 	//获取棋子所在列
-	static getCol = (board, index) => {
+	static getCol(board, index) {
 		return board.reshape(5, 5).map(row => row[index % 5]);
 	}
 	//左上到右下斜线
-	static getLeftup2Rightdown = (board, index) => {
+	static getLeftup2Rightdown(board, index) {
 		return board.filter((_, i) => (i % 5 - (i / 5 | 0)) === (Math.floor(index % 5) - Math.floor(index / 5)));
 	}
 	//右上到左下斜线
-	static getRightup2Leftdown = (board, index) => {
+	static getRightup2Leftdown(board, index) {
 		return board.filter((_, i) => (i % 5 + (i / 5 | 0)) === (Math.floor(index % 5) + Math.floor(index / 5)));
 	}
 	//第一象限
-	static getQuadrant1 = (board, index) => {
+	static getQuadrant1(board, index) {
 		if ((index / 5 | 0) > 0 && (index % 5) + 1 < 5) {
 			return [board[index], board[index + 1], board[index - 4], board[index - 5]];
 		}
 		return undefined;
 	}
 	//第二象限
-	static getQuadrant2 = (board, index) => {
+	static getQuadrant2(board, index) {
 		if ((index / 5 | 0) > 0 && (index % 5) > 0) {
 			return [board[index], board[index - 5], board[index - 6], board[index - 1]];
 		}
 		return undefined;
 	}
 	//第三象限
-	static getQuadrant3 = (board, index) => {
+	static getQuadrant3(board, index) {
 		if ((index / 5 | 0) + 1 < 5 && (index % 5) > 0) {
 			return [board[index], board[index - 1], board[index + 4], board[index + 5]];
 		}
 		return undefined;
 	}
 	//第四象限
-	static getQuadrant4 = (board, index) => {
+	static getQuadrant4(board, index) {
 		if ((index / 5 | 0) + 1 < 5 && (index % 5) + 1 < 5) {
 			return [board[index], board[index + 5], board[index + 6], board[index + 1]];
 		}
 		return undefined;
+	}
+
+	//向量点积
+	static dotProduct(a, b) {
+		if (a.length !== b.length) {
+			throw new Error("Length Error!");
+		}
+		return a.reduce((acc, cur, i) => acc + cur * b[i], 0);
 	}
 
 	//两个位置是否相邻
@@ -372,6 +380,7 @@ class Game {
 
 	//将事件转化为Action
 	getAction(location) {
+
 		//落子，Game处于APPEND 两个Player的removes都为0 board此处为0
 		if (this.stage === Game.APPEND &&
 			this.players.every(player => player.removes === 0) &&
@@ -402,20 +411,76 @@ class Game {
 
 	//执行玩家指令
 	excute(action) {
+		let holder = this.getHolder();
 		if (action.type === Action.APPEND) { //执行落子
 			this.board[action.target] = getHolder().type;
 			//检查是否有赢家、检查是否有成项、是否切换玩家、是否进入摘子（白子先摘）
+			this.winner = this.findWinner();
+			if (this.winner) {
+				this.stage = Game.NOTRUN;
+				console.log("winner", this.winner);
+			} else {
+				if (isItemPoint(action.target)) { //落子参与成项，更新执手方removes
+					let removes = Utils.dotProduct(Object.values(this.getItems(action.target)), Object.values(this.rule));
+					this.setPlayerRemoves(this.getHolder(), removes);
+				} else { //落子不参与成项
+					//棋盘满了，进入提子阶段
+					if (Utils.isBoardFull(this.board)) {
+						this.stage = Game.REMOVE;
+						//如果黑子可以被提子，则提一子黑子
+						if (this.isRemovable(Player.BLACK)) {
+							this.setHolder(Player.WHITE);
+							this.setPlayerRemoves(this.getHolder(), 1);
+						}
+						if (this.isRemovable(Player.WHITE)) {
+							this.setPlayerRemoves(this.players[0], 1);
+						}
+					} else { //棋盘没满，切换玩家
+						this.shiftHolder();
+					}
+				}
+			}
 		}
 
 		if (action.type === Action.MOVING) { //移动一子
 			this.board[action.target] = this.board[action.origin];
 			this.board[action.origin] = 0;
 			//检查是否有赢家、检查是否有成项、是否切换玩家
+			this.winner = this.findWinner();
+			if (this.winner) { //存在赢家，游戏结束
+				this.stage = Game.NOTRUN;
+				console.log("winner", this.winner);
+			} else {
+				if (isItemPoint(action.target)) { //走子参与成项，更新执手方removes
+					let removes = Utils.dotProduct(Object.values(this.getItems(action.target)), Object.values(this.rule));
+					this.setPlayerRemoves(this.getHolder(), removes);
+				} else { //走子不参与成项，切换玩家
+					this.shiftHolder();
+				}
+			}
 		}
 
 		if (action.type === Action.REMOVE) { //执行摘子
 			this.board[action.target] = 0;
 			//检查是否有赢家、摘子是否结束（无法继续摘子或结束归零）、是否切换玩家、是否开启下一阶段
+			this.winner = this.findWinner();
+			if (this.winner) { //存在赢家，游戏结束
+				this.stage = Game.NOTRUN;
+				console.log("winner", this.winner);
+			} else {
+				let holder = this.getHolder();
+				if (this.stage === Game.REMOVE) { //游戏处于下满提子阶段
+					if (this.players.every(player => { player.removes === 0 })) {//提子结束，进入走子阶段
+						this.stage = Game.MOVING
+					}else if (holder.removes === 0 || !this.isRemovable(-holder.type)) { //执手方完成摘子或对手方已无子可摘
+						//切换玩家
+						this.shiftHolder();
+					}
+				}else if(holder.removes === 0 || !this.isRemovable(-holder.type)){
+					//游戏处于非下满提子阶段，且执手方完成摘子或对手无法被摘子了,切换对手
+					this.shiftHolder();
+				}
+			}
 		}
 
 		if (action.type === Action.SELECT) { //选中一子
@@ -484,7 +549,22 @@ class Game {
 				}
 			}
 		});
+		return items;
 	}
+
+	//设置玩家剩余摘子数
+	setPlayerRemoves(player, removes) {
+		player.removes = removes;
+	}
+
+	//还有能被提子的子
+	isRemovable(type) {
+		return this.board.some(piece, index => {
+			return piece === type && !isItemPoint(index);
+		});
+	}
+
+
 
 	//获取格点相关向量
 	getRelatedVectors(location) {
