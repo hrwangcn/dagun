@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src="game.js"></script>
+    <script>
+        let game = new Game();
+        function main() {
+            game.start();
+            updateUI(game);
+            document.getElementById("panel").addEventListener("click", function (e) {
+                let action = game.getAction(parseInt(e.target.id));
+                game.excute(action);
+                updateUI(game);
+            });
+        }
+        function updateUI(game) {
+            let info = document.getElementById("info");
+            if (game.winner) {
+                info.innerHTML = game.winner.type === Player.BLACK ? "黑棋赢了" : game.winner.type === Player.WHITE ? "白棋赢了" : "平局";
+            }
+            document.getElementById("info").innerHTML = game.getHolder().type === Player.BLACK ? "黑棋轮到你下棋了" : "白棋轮到你下棋了";
+            game.board.forEach((type, location) => {
+                let cell = document.getElementById(location);
+                cell.className = type === Player.BLACK ? "black" : type === Player.WHITE ? "white" : "";
+            });
+        }
+        window.onload = main;
+    </script>
+</head>
+
+<body>
+    <div id="info"></div>
+    <table id="panel">
+        <tr>
+            <td id="0"></td>
+            <td id="1"></td>
+            <td id="2"></td>
+            <td id="3"></td>
+            <td id="4"></td>
+        </tr>
+        <tr>
+            <td id="5"></td>
+            <td id="6"></td>
+            <td id="7"></td>
+            <td id="8"></td>
+            <td id="9"></td>
+        </tr>
+        <tr>
+            <td id="10"></td>
+            <td id="11"></td>
+            <td id="12"></td>
+            <td id="13"></td>
+            <td id="14"></td>
+        </tr>
+        <tr>
+            <td id="15"></td>
+            <td id="16"></td>
+            <td id="17"></td>
+            <td id="18"></td>
+            <td id="19"></td>
+        </tr>
+        <tr>
+            <td id="20"></td>
+            <td id="21"></td>
+            <td id="22"></td>
+            <td id="23"></td>
+            <td id="24"></td>
+        </tr>
+    </table>
+</body>
+
+</html>
