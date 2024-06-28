@@ -27,7 +27,12 @@
             }
             game.board.forEach((type, location) => {
                 let cell = document.getElementById(location);
-                cell.className = type === Player.BLACK ? "black" : type === Player.WHITE ? "white" : "";
+                let className = '';
+                switch (type) {
+                    case Player.BLACK: className = "black"; break;
+                    case Player.WHITE: className = "white"; break;
+                }
+                cell.className =className;
             });
             if (game.winner) {
                 let winner = game.winner;
