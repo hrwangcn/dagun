@@ -101,9 +101,9 @@ class Utils {
 }
 
 class Player {
-    static BLACK = 1;
-    static EMPTY = 0;
-    static WHITE = -1;
+    static get BLACK(){return  1};
+    static get EMPTY(){return  0};
+    static get WHITE(){return -1};
     constructor(type, isHolding) {
         this.type = type;
         this.removes = 0; //剩余摘子次数
@@ -113,10 +113,14 @@ class Player {
 }
 
 class Action {
-    static APPEND = 0; //落子  赢、开启下一阶段
-    static REMOVE = 1; //提子
-    static SELECT = 2; //选中棋子待行
-    static MOVING = 3; //待行子行动到指定位置
+    //落子  赢、开启下一阶段
+    static get APPEND(){return 0}
+    //提子
+    static get REMOVE(){return 1}
+    //选中棋子待行
+    static get SELECT(){return 2}
+    //待行子行动到指定位置
+    static get MOVING(){return 3}
 
     constructor(options) {
         this.type = options.type;
@@ -127,10 +131,10 @@ class Action {
 }
 
 class Game {
-    static NOTRUN = 0;
-    static APPEND = 1;
-    static REMOVE = 2;
-    static MOVING = 3;
+    static get NOTRUN(){return 0}
+    static get APPEND(){return 1}
+    static get REMOVE(){return 2}
+    static get MOVING(){return 3}
     constructor(rule) {
         if (rule) {
             this.rule = rule;
