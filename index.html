@@ -15,16 +15,31 @@
                 updateUI(game);
             });
         }
+        //更新页面提示信息
         function updateUI(game) {
             let info = document.getElementById("info");
-            if (game.winner) {
-                info.innerHTML = game.winner.type === Player.BLACK ? "黑棋赢了" : game.winner.type === Player.WHITE ? "白棋赢了" : "平局";
+            let holder = game.getHolder();
+            let action = holder.removes === 0 ? "下棋" : "提子";
+            let holderName = '';
+            switch (holder.type) {
+                case Player.BLACK: holderName = "黑棋"; break;
+                case Player.WHITE: holderName = "白棋"; break;
             }
-            document.getElementById("info").innerHTML = game.getHolder().type === Player.BLACK ? "黑棋轮到你下棋了" : "白棋轮到你下棋了";
             game.board.forEach((type, location) => {
                 let cell = document.getElementById(location);
                 cell.className = type === Player.BLACK ? "black" : type === Player.WHITE ? "white" : "";
             });
+            if (game.winner) {
+                let winner = game.winner;
+                let winnerName = '';
+                switch (winner.type) {
+                    case Player.BLACK: winnerName = "黑棋"; break;
+                    case Player.WHITE: winnerName = "白棋"; break;
+                }
+                info.innerHTML = `${winnerName}赢了!`;
+            } else {
+                info.innerHTML = `${holderName}${action}`;
+            }
         }
         window.onload = main;
     </script>

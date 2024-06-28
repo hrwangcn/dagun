@@ -101,9 +101,9 @@ class Utils {
 }
 
 class Player {
-    static get BLACK(){return  1};
-    static get EMPTY(){return  0};
-    static get WHITE(){return -1};
+    static get BLACK() { return 1 };
+    static get EMPTY() { return 0 };
+    static get WHITE() { return -1 };
     constructor(type, isHolding) {
         this.type = type;
         this.removes = 0; //剩余摘子次数
@@ -114,27 +114,27 @@ class Player {
 
 class Action {
     //落子  赢、开启下一阶段
-    static get APPEND(){return 0}
+    static get APPEND() { return 0 }
     //提子
-    static get REMOVE(){return 1}
+    static get REMOVE() { return 1 }
     //选中棋子待行
-    static get SELECT(){return 2}
+    static get SELECT() { return 2 }
     //待行子行动到指定位置
-    static get MOVING(){return 3}
+    static get MOVING() { return 3 }
 
     constructor(options) {
         this.type = options.type;
-        this.target = options.target || null;
-        this.origin = options.origin || null;
+        this.target = options.target;
+        this.origin = options.origin;
     }
 
 }
 
 class Game {
-    static get NOTRUN(){return 0}
-    static get APPEND(){return 1}
-    static get REMOVE(){return 2}
-    static get MOVING(){return 3}
+    static get NOTRUN() { return 0 }
+    static get APPEND() { return 1 }
+    static get REMOVE() { return 2 }
+    static get MOVING() { return 3 }
     constructor(rule) {
         if (rule) {
             this.rule = rule;
@@ -175,7 +175,7 @@ class Game {
             return new Action({ type: Action.APPEND, target: location });
         }
         //提子，Game不处于NOTRUN阶段，存在player的removes大于0，board此处为敌子
-        if (this.stage != Game.NOTRUN &&
+        if (this.stage != Game.NOTRUN && !this.isItemPoint(location) &&
             this.players.some(player => player.removes > 0) &&
             this.board[location] === -this.getHolder().type) {
             return new Action({ type: Action.REMOVE, target: location });
@@ -198,9 +198,10 @@ class Game {
 
     //执行玩家指令
     excute(action) {
+        console.log(action);
         let holder = this.getHolder();
         if (action.type === Action.APPEND) { //执行落子
-            this.board[action.target] = this.getHolder().type;
+            this.board[action.target] = holder.type;
             //检查是否有赢家、检查是否有成项、是否切换玩家、是否进入摘子（白子先摘）
             this.winner = this.findWinner();
             if (this.winner) {
@@ -209,22 +210,20 @@ class Game {
             } else {
                 if (this.isItemPoint(action.target)) { //落子参与成项，更新执手方removes
                     let removes = Utils.dotProduct(Object.values(this.getItems(action.target)), Object.values(this.rule));
-                    this.setPlayerRemoves(this.getHolder(), removes);
+                    this.setPlayerRemoves(holder, removes);
                 } else { //落子不参与成项
-                    console.log("no item point", action.target);
                     //棋盘满了，进入提子阶段
                     if (Utils.isBoardFull(this.board)) {
                         this.stage = Game.REMOVE;
                         //如果黑子可以被提子，则提一子黑子
                         if (this.isRemovable(Player.BLACK)) {
                             this.setHolder(Player.WHITE);
-                            this.setPlayerRemoves(this.getHolder(), 1);
+                            this.setPlayerRemoves(holder, 1);
                         }
                         if (this.isRemovable(Player.WHITE)) {
                             this.setPlayerRemoves(this.players[0], 1);
                         }
                     } else { //棋盘没满，切换玩家
-                        console.log("Not full,CHANGE");
                         this.shiftHolder();
                     }
                 }
@@ -242,7 +241,7 @@ class Game {
             } else {
                 if (this.isItemPoint(action.target)) { //走子参与成项，更新执手方removes
                     let removes = Utils.dotProduct(Object.values(this.getItems(action.target)), Object.values(this.rule));
-                    this.setPlayerRemoves(this.getHolder(), removes);
+                    this.setPlayerRemoves(holder, removes);
                 } else { //走子不参与成项，切换玩家
                     this.shiftHolder();
                 }
@@ -251,14 +250,13 @@ class Game {
 
         if (action.type === Action.REMOVE) { //执行摘子
             this.board[action.target] = 0;
-            this.getHolder().removes--;
+            holder.removes--;
             //检查是否有赢家、摘子是否结束（无法继续摘子或结束归零）、是否切换玩家、是否开启下一阶段
             this.winner = this.findWinner();
             if (this.winner) { //存在赢家，游戏结束
                 this.stage = Game.NOTRUN;
                 console.log("winner", this.winner);
             } else {
-                let holder = this.getHolder();
                 if (this.stage === Game.REMOVE) { //游戏处于下满提子阶段
                     if (this.players.every(player => { player.removes === 0 })) {//提子结束，进入走子阶段
                         this.stage = Game.MOVING
@@ -268,6 +266,7 @@ class Game {
                     }
                 } else if (holder.removes === 0 || !this.isRemovable(-holder.type)) {
                     //游戏处于非下满提子阶段，且执手方完成摘子或对手无法被摘子了,切换对手
+                    this.setPlayerRemoves(holder, 0);
                     this.shiftHolder();
                 }
             }
@@ -284,8 +283,7 @@ class Game {
         //落子阶段确认赢家，一方的棋子个数大于13个
         if (this.stage === Game.APPEND) {
             if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) > 13) {
-                return this.players.find(player => player.type = Player.BLACK);
-            }
+                return this.players.find(player => player.type = Player.BLACK);            }
             if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) > 13) {
                 return this.players.find(player => player.type = Player.WHITE);
             }
@@ -327,13 +325,32 @@ class Game {
         relatedVectors.forEach((vector, index) => {
             if (vector && vector.every(piece => piece === vector[0])) {
                 switch (index) {
-                    case 0 || 1: items.dagun++; break; //行列
-                    case 2 || 3: switch (vector.length) {  //正斜、反斜
-                        case 3: items.sanxie++; break;
-                        case 4: items.sixie++; break;
-                        case 5: items.tong++; break;
-                    }; break;
-                    case 4 || 5 || 6 || 7: items.fang++; break; //小方
+                    case 0:
+                    case 1:
+                        items.dagun++;
+                        break; // 行列
+
+                    case 2:
+                    case 3:
+                        switch (vector.length) {  // 正斜、反斜
+                            case 3:
+                                items.sanxie++;
+                                break;
+                            case 4:
+                                items.sixie++;
+                                break;
+                            case 5:
+                                items.tong++;
+                                break;
+                        }
+                        break;
+
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                        items.fang++;
+                        break; // 小方
                 }
             }
         });
