@@ -1,51 +1,47 @@
-# dagun
-五棍棋/大棍/五大棍/五虎棋/三斜
-```
-Game {
-    
-    变量
+# 大棍
+大棍（又称五棍棋/五大棍/五虎棋/三斜），是一种中国山东地区的传统棋类游戏，基本规则如下：
+1. 棋盘规格为 5×5 状态
+2. 棋盘上每个格子可以放置一个棋子，棋子为黑棋或白棋，黑棋先手。
+3. 当某一方玩家形成**成项**结构时可以吃掉对方一定数量的棋子，前提是对方被吃之子不参与成项
+4. 成项吃子的数量根据各地区规则稍有不同，但成项结构都是一样的，本游戏规定：
+三斜、四斜、小方提一子，大棍提二子，通天提三子。
+可以通过Game类的构造方法传参，重新定义吃子规则。
+5. 以下是成项结构的说明：
+* 三斜：三个同色棋子斜向相连，且两端的棋子恰好在棋盘边缘，则该方可以提子。
+O  O  X  O  O
+O  X  O  X  O
+X  O  O  O  X
+O  X  O  X  O
+O  O  X  O  O
+针对玩家X，以上棋盘包含4个三斜结构
 
-    actionType: 落子1、提子-1
-    holder: 当前执手方 1黑-1白
-    board: 当前棋盘 一维数组
-    stage: 1布子，2摘子，3行子
-    staus: true 游戏进行中 false 游戏结束
-    walker: int选中待行之子
-    rule: 提子规则
+* 四斜：四个同色棋子斜向相连，且两端的棋子恰好在棋盘边缘，则该方可以提子。
+O  X  O  X  O
+X  O  X  O  X
+O  X  O  X  O
+X  O  X  O  X
+O  X  O  X  O
+针对玩家X，以上棋盘包含4个三斜结构
 
-    函数
+* 小方：四个同色棋子构成一个2×2的小方块，则该方可以提子。
+O  O  O  O  O
+O  X  X  O  O
+O  X  X  O  O
+O  O  O  O  O
+O  O  O  O  O
+针对玩家X，以上棋盘包含1个小方结构
 
-    excute(action) //执行一个动作 
-    //动作举例：黑方提子位置8、白方落子位置6、黑方选中位置3、黑方行子位置2
+* 大棍：五个同色棋子水平或垂直相连，则该方可以提子。
+O  O  X  O  O
+O  O  X  O  O
+X  X  X  X  X
+O  O  X  O  O
+O  O  X  O  O
+针对玩家X，以上棋盘包含2个大棍结构
 
-    getAction(location) //将前端激发转化为Action
-
-    isDropable(location) //location坐标能否落子
-    isRemovable(location) //location坐标能否提子
-
-    isItemPoint(location) //location坐标是否参与成项
-
-    hasWinner() //结合当前棋盘状态判断是否有赢家
-    isBoardFull()   //棋盘是否已满
-
-}
-
-class Board extends Array {
-    constructor(...args){
-        super(args);
-        this.reshape = (rows,cols) => {
-            if(rows * cols === this.length){
-                let result = [];
-                for(let i = 0;i<rows;i++){
-                    result[i]=this.slice(i*cols,i*cols+cols)
-                }
-                return result;
-            }
-        }
-        this.isFull = ()=>{
-            return !this.some(value => value === 0);
-        }
-    }
-}
-
-```
+* 通天：五个同色棋子斜向相连，则该方可以提子。
+X  O  O  O  X
+O  X  O  X  O
+O  O  X  O  O
+O  X  O  X  O
+X  O  O  O  X
