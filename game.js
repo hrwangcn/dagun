@@ -283,20 +283,12 @@ class Game {
         //落子阶段确认赢家，一方的棋子个数大于13个
         if (this.stage === Game.APPEND) {
             if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) > 13) {
-                return this.players.find(player => player.type = Player.BLACK);            }
+                return this.players.find(player => player.type = Player.BLACK);
+            }
             if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) > 13) {
                 return this.players.find(player => player.type = Player.WHITE);
             }
             return null;
-        }
-        //摘子阶段和行子阶段少子判负
-        if (this.stage === Game.REMOVE || this.stage === Game.MOVING) {
-            if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) < 3) {
-                return this.players.find(player => player.type = Player.WHITE);
-            }
-            if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) < 3) {
-                return this.players.find(player => player.type = Player.BLACK);
-            }
         }
         //行子阶段，闷杀
         if (this.stage === Game.MOVING) {
@@ -306,6 +298,17 @@ class Game {
             }
             //白子不可移动，赢家是黑子
             if (!board.some(value, i => value === Player.WHITE && Utils.isMovable(this.board, i))) {
+                return this.players.find(player => player.type = Player.BLACK);
+            }
+        }
+        //摘子阶段和行子阶段少子判负
+        if (this.stage === Game.REMOVE || this.stage === Game.MOVING) {
+            //摘子阶段都是成项，棋子少的一方判负，相等判平
+            //少于2子，直接判负
+            if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) < 3) {
+                return this.players.find(player => player.type = Player.WHITE);
+            }
+            if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) < 3) {
                 return this.players.find(player => player.type = Player.BLACK);
             }
         }
