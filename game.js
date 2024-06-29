@@ -319,17 +319,13 @@ class Game {
             if (whites.every(value => !Utils.isMovable(this.board, value))) {
                 return this.getPlayerByType(Player.BLACK);
             }
-            return null;
-        }
-        //摘子阶段和行子阶段少子判负
-        if (this.stage === Game.REMOVE || this.stage === Game.MOVING) {
             //摘子阶段都是成项，棋子少的一方判负，相等判平
             //少于2子，直接判负
-            if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) < 3) {
-                return this.players.find(player => player.type = Player.WHITE);
+            if (blacks.length < 3) {
+                return this.getPlayerByType(Player.WHITE);
             }
-            if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) < 3) {
-                return this.players.find(player => player.type = Player.BLACK);
+            if (whites.length < 3) {
+                return this.getPlayerByType(Player.BLACK);
             }
         }
         return null;
