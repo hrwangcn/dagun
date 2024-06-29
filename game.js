@@ -299,20 +299,20 @@ class Game {
 
     //判断输赢
     findWinner() {
+        let blacks = this.findAllLocation(Player.BLACK);
+        let whites = this.findAllLocation(Player.WHITE);
         //落子阶段确认赢家，一方的棋子个数大于13个
         if (this.stage === Game.APPEND) {
-            if (this.board.reduce((i, piece) => { return i + (piece === Player.BLACK ? 1 : 0) }, 0) > 13) {
-                return this.players.find(player => player.type = Player.BLACK);
+            if (blacks.length > 13) {
+                return this.getPlayerByType(Player.BLACK);
             }
-            if (this.board.reduce((i, piece) => { return i + (piece === Player.WHITE ? 1 : 0) }, 0) > 13) {
-                return this.players.find(player => player.type = Player.WHITE);
+            if (whites.length > 13) {
+                return this.getPlayerByType(Player.WHITE);
             }
             return null;
         }
         //行子阶段，闷杀
         if (this.stage === Game.MOVING || this.stage === Game.REMOVE) {
-            let blacks = this.findAllLocation(Player.BLACK);
-            let whites = this.findAllLocation(Player.WHITE);
             if (blacks.every(value => !Utils.isMovable(this.board, value))) {
                 return this.getPlayerByType(Player.WHITE);
             }
