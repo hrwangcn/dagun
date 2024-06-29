@@ -314,10 +314,10 @@ class Game {
 
         if (this.stage === Game.MOVING || this.stage === Game.REMOVE) {
             //闷杀
-            if (getMovableLocationByType(Player.BLACK).length === 0) {
+            if (this.getMovableLocationByType(Player.BLACK).length === 0) {
                 return this.getPlayerByType(Player.WHITE);
             }
-            if (getMovableLocationByType(Player.BLACK).length === 0) {
+            if (this.getMovableLocationByType(Player.WHITE).length === 0) {
                 return this.getPlayerByType(Player.BLACK);
             }
             //少子判负
