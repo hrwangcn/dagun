@@ -311,16 +311,16 @@ class Game {
             }
             return null;
         }
-        //行子阶段，闷杀
+
         if (this.stage === Game.MOVING || this.stage === Game.REMOVE) {
-            if (blacks.every(value => !Utils.isMovable(this.board, value))) {
+            //闷杀
+            if (getMovableLocationByType(Player.BLACK).length === 0) {
                 return this.getPlayerByType(Player.WHITE);
             }
-            if (whites.every(value => !Utils.isMovable(this.board, value))) {
+            if (getMovableLocationByType(Player.BLACK).length === 0) {
                 return this.getPlayerByType(Player.BLACK);
             }
-            //摘子阶段都是成项，棋子少的一方判负，相等判平
-            //少于2子，直接判负
+            //少子判负
             if (blacks.length < 3) {
                 return this.getPlayerByType(Player.WHITE);
             }
@@ -330,6 +330,13 @@ class Game {
         }
         return null;
     }
+
+    //获取某一方能移动的格点列表
+    getMovableLocationByType(type) {
+        let locations = this.findAllLocation(type);
+        return locations.filter((location) => Utils.isMovable(this.board, location));
+    }
+
     //获取某一方的所有格点位置
     findAllLocation(type) {
         let locations = [];
