@@ -91,11 +91,11 @@ class Utils {
     static isMovable(board, location) {
         let i = location / 5 | 0;
         let j = location % 5;
-        let dBoard = board.reshape(5,5);
-        if(dBoard[i][j-1] === 0 || dBoard[i][j+1] === 0){
+        let dBoard = board.reshape(5, 5);
+        if (dBoard[i][j - 1] === 0 || dBoard[i][j + 1] === 0) {
             return true;
         }
-        if (dBoard[i-1] && dBoard[i-1][j] === 0 || dBoard[i+1] && dBoard[i+1][j] === 0) {
+        if (dBoard[i - 1] && dBoard[i - 1][j] === 0 || dBoard[i + 1] && dBoard[i + 1][j] === 0) {
             return true;
         }
         return false;
@@ -123,6 +123,8 @@ class Action {
     static get SELECT() { return 2 }
     //待行子行动到指定位置
     static get MOVING() { return 3 }
+    //取消选中
+    static get CANCEL() { return 4 }
 
     constructor(options) {
         this.type = options.type;
@@ -169,7 +171,7 @@ class Game {
 
     getPlayerByType(type) {
         return this.players.find(player => player.type === type);
-    }   
+    }
 
     //将事件转化为Action
     getAction(location) {
@@ -198,6 +200,10 @@ class Game {
             Utils.isNeighbour(this.walker, location) &&
             this.board[this.walker] === this.getHolder().type) {
             return new Action({ type: Action.MOVING, target: location, origin: this.walker });
+        }
+        //取消选中
+        if (this.stage === Game.MOVING && this.walker !== -1 && location === this.walker) {
+            return new Action({ type: Action.CANCEL });
         }
         throw new Error("不是正确的操作");
     }
@@ -285,6 +291,10 @@ class Game {
             this.walker = action.target;
         }
 
+        if (action.type === Action.CANCEL) { //取消选中
+            this.walker = -1;
+        }
+
     }
 
     //判断输赢
@@ -300,13 +310,13 @@ class Game {
             return null;
         }
         //行子阶段，闷杀
-        if (this.stage === Game.MOVING) {
+        if (this.stage === Game.MOVING || this.stage === Game.REMOVE) {
             let blacks = this.findAllLocation(Player.BLACK);
             let whites = this.findAllLocation(Player.WHITE);
-            if(blacks.every(value => !Utils.isMovable(this.board,value))){
+            if (blacks.every(value => !Utils.isMovable(this.board, value))) {
                 return this.getPlayerByType(Player.WHITE);
             }
-            if(whites.every(value => !Utils.isMovable(this.board,value))){
+            if (whites.every(value => !Utils.isMovable(this.board, value))) {
                 return this.getPlayerByType(Player.BLACK);
             }
             return null;
@@ -325,10 +335,10 @@ class Game {
         return null;
     }
     //获取某一方的所有格点位置
-    findAllLocation(type){
+    findAllLocation(type) {
         let locations = [];
         for (let i = 0; i < this.board.length; i++) {
-            if(this.board[i] === type){
+            if (this.board[i] === type) {
                 locations.push(i);
             }
         }
@@ -349,7 +359,7 @@ class Game {
             if (vector && vector.every(piece => piece === vector[0])) {
                 switch (index) {
                     case 0:
-                        case 1:
+                    case 1:
                         items.dagun++;
                         break; // 行列
 
