@@ -79,7 +79,7 @@ class Utils {
     static isNeighbour(walker, location) {
         if (location === walker - 5 || location === walker + 5) {
             return true;
-        } else if (location / 5 | 0 === walker / 5 | 0) {
+        } else if ((location / 5 | 0) === (walker / 5 | 0)) {
             if (location === walker - 1 || location === walker + 1) {
                 return true;
             }
@@ -89,12 +89,14 @@ class Utils {
 
     //location处是否可行
     static isMovable(board, location) {
-        if (board[location - 5] === 0 || board[location + 5] === 0) {
+        let i = location / 5 | 0;
+        let j = location % 5;
+        let dBoard = board.reshape(5,5);
+        if(dBoard[i][j-1] === 0 || dBoard[i][j+1] === 0){
             return true;
-        } else if ((location - 1) / 5 | 0 === location / 5 | 0) {
-            if (board[location - 1] === 0) return true;
-        } else if ((location + 1) / 5 | 0 === location / 5 | 0) {
-            if (board[location + 1] === 0) return true;
+        }
+        if (dBoard[i-1] && dBoard[i-1][j] === 0 || dBoard[i+1] && dBoard[i+1][j] === 0) {
+            return true;
         }
         return false;
     }
@@ -165,6 +167,10 @@ class Game {
         this.players.find(player => player.type != type).isHolding = false;
     }
 
+    getPlayerByType(type) {
+        return this.players.find(player => player.type === type);
+    }   
+
     //将事件转化为Action
     getAction(location) {
 
@@ -218,7 +224,7 @@ class Game {
                         //如果黑子可以被提子，则提一子黑子
                         if (this.isRemovable(Player.BLACK)) {
                             this.setHolder(Player.WHITE);
-                            this.setPlayerRemoves(holder, 1);
+                            this.setPlayerRemoves(this.players[1], 1);
                         }
                         if (this.isRemovable(Player.WHITE)) {
                             this.setPlayerRemoves(this.players[0], 1);
@@ -233,6 +239,7 @@ class Game {
         if (action.type === Action.MOVING) { //移动一子
             this.board[action.target] = this.board[action.origin];
             this.board[action.origin] = 0;
+            this.walker = -1;
             //检查是否有赢家、检查是否有成项、是否切换玩家
             this.winner = this.findWinner();
             if (this.winner) { //存在赢家，游戏结束
@@ -258,8 +265,10 @@ class Game {
                 console.log("winner", this.winner);
             } else {
                 if (this.stage === Game.REMOVE) { //游戏处于下满提子阶段
-                    if (this.players.every(player => { player.removes === 0 })) {//提子结束，进入走子阶段
-                        this.stage = Game.MOVING
+                    if (this.players.every(player => player.removes === 0)) {//提子结束，进入走子阶段
+                        this.stage = Game.MOVING;
+                        this.players[0].isHolding = false;
+                        this.players[1].isHolding = true;
                     } else if (holder.removes === 0 || !this.isRemovable(-holder.type)) { //执手方完成摘子或对手方已无子可摘
                         //切换玩家
                         this.shiftHolder();
@@ -292,14 +301,15 @@ class Game {
         }
         //行子阶段，闷杀
         if (this.stage === Game.MOVING) {
-            //黑子不可移动，赢家是白子
-            if (!board.some(value, i => value === Player.BLACK && Utils.isMovable(this.board, i))) {
-                return this.players.find(player => player.type = Player.WHITE);
+            let blacks = this.findAllLocation(Player.BLACK);
+            let whites = this.findAllLocation(Player.WHITE);
+            if(blacks.every(value => !Utils.isMovable(this.board,value))){
+                return this.getPlayerByType(Player.WHITE);
             }
-            //白子不可移动，赢家是黑子
-            if (!board.some(value, i => value === Player.WHITE && Utils.isMovable(this.board, i))) {
-                return this.players.find(player => player.type = Player.BLACK);
+            if(whites.every(value => !Utils.isMovable(this.board,value))){
+                return this.getPlayerByType(Player.BLACK);
             }
+            return null;
         }
         //摘子阶段和行子阶段少子判负
         if (this.stage === Game.REMOVE || this.stage === Game.MOVING) {
@@ -313,6 +323,16 @@ class Game {
             }
         }
         return null;
+    }
+    //获取某一方的所有格点位置
+    findAllLocation(type){
+        let locations = [];
+        for (let i = 0; i < this.board.length; i++) {
+            if(this.board[i] === type){
+                locations.push(i);
+            }
+        }
+        return locations;
     }
 
     //格点是否成项点
@@ -329,7 +349,7 @@ class Game {
             if (vector && vector.every(piece => piece === vector[0])) {
                 switch (index) {
                     case 0:
-                    case 1:
+                        case 1:
                         items.dagun++;
                         break; // 行列
 
