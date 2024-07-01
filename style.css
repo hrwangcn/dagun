@@ -1,6 +1,25 @@
+@media (min-width:0px) and (max-width: 980px) {
+    table{
+        width: 90vw;
+        height: 90vw;
+    }
+}
+@media (min-width:981px){
+    table{
+        width: 40vw;
+        height: 40vw;
+    }
+}
+body{
+    margin: 0;
+    display: grid;
+    place-items: center;
+}
+div{
+    margin:2vw;
+    font-size: 5vw;
+}
 table{
-    width:500px;
-    height:500px;
     border-collapse: collapse;
 }
 td {

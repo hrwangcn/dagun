@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css">
     <script src="game.js"></script>
     <script>
@@ -32,7 +33,7 @@
                     case Player.BLACK: className = "black"; break;
                     case Player.WHITE: className = "white"; break;
                 }
-                cell.className =className;
+                cell.className = className;
             });
             if (game.winner) {
                 let winner = game.winner;
