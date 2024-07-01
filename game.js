@@ -86,20 +86,6 @@ class Utils {
         }
         return false;
     }
-
-    //location处是否可行
-    static isMovable(board, location) {
-        let i = location / 5 | 0;
-        let j = location % 5;
-        let dBoard = board.reshape(5, 5);
-        if (dBoard[i][j - 1] === 0 || dBoard[i][j + 1] === 0) {
-            return true;
-        }
-        if (dBoard[i - 1] && dBoard[i - 1][j] === 0 || dBoard[i + 1] && dBoard[i + 1][j] === 0) {
-            return true;
-        }
-        return false;
-    }
 }
 
 class Player {
@@ -190,7 +176,7 @@ class Game {
         }
         //选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军，location可行
         if (this.stage === Game.MOVING &&
-            this.walker === -1 && Utils.isMovable(this.board, location) &&
+            this.walker === -1 && this.isMovablePoint(location) &&
             this.board[location] === this.getHolder().type) {
             return new Action({ type: Action.SELECT, target: location });
         }
@@ -253,7 +239,7 @@ class Game {
                 console.log("winner", this.winner);
             } else {
                 //走子参与成项，且敌子有子可消，更新执手方removes
-                if (this.isItemPoint(action.target) && this.isRemovable(-holder.type)) { 
+                if (this.isItemPoint(action.target) && this.isRemovable(-holder.type)) {
                     let removes = Utils.dotProduct(Object.values(this.getItems(action.target)), Object.values(this.rule));
                     this.setPlayerRemoves(holder, removes);
                 } else { //走子不参与成项 或没有敌子可消，切换玩家
@@ -334,11 +320,34 @@ class Game {
         return null;
     }
 
+    //一方还有能被提子的子
+    isRemovable(type) {
+        return this.getRemovableLocationByType(type).length > 0;
+    }
+
+    //一方还能移动
+    isMovable(type) {
+        return this.getMovableLocationByType(type).length > 0;
+    }
+
     //获取某一方能移动的格点列表
     getMovableLocationByType(type) {
         let locations = this.findAllLocation(type);
-        return locations.filter((location) => Utils.isMovable(this.board, location));
+        return locations.filter((location) => this.isMovablePoint(location));
     }
+
+    //获取一方能被摘子的格点列表
+    getRemovableLocationByType(type) {
+        let locations = this.findAllLocation(type);
+        return locations.filter((location) => !this.isItemPoint(location));
+    }
+
+    //是一个可移动的格点
+    isMovablePoint(location) {
+        let neighbors = this.findAllNeighbor(location);
+        return neighbors.some(neighbor => neighbor === 0);
+    }
+
 
     //获取某一方的所有格点位置
     findAllLocation(type) {
@@ -349,6 +358,22 @@ class Game {
             }
         }
         return locations;
+    }
+
+    findAllNeighbor(location) {
+        let neighbors = [];
+        let i = location / 5 | 0;
+        let j = location % 5;
+        let board = this.board.reshape(5, 5);
+        if (board[i - 1] != undefined)
+            neighbors.push(board[i - 1][j]);
+        if (board[i + 1] != undefined)
+            neighbors.push(board[i + 1][j]);
+        if (board[i][j - 1] != undefined)
+            neighbors.push(board[i][j - 1]);
+        if (board[i][j + 1] != undefined)
+            neighbors.push(board[i][j + 1]);
+        return neighbors;
     }
 
     //格点是否成项点
@@ -401,12 +426,6 @@ class Game {
         player.removes = removes;
     }
 
-    //还有能被提子的子
-    isRemovable(type) {
-        return this.board.some((piece, index) => {
-            return piece === type && !this.isItemPoint(index);
-        });
-    }
 
 
 
