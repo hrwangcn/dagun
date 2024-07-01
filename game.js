@@ -252,10 +252,11 @@ class Game {
                 this.stage = Game.NOTRUN;
                 console.log("winner", this.winner);
             } else {
-                if (this.isItemPoint(action.target)) { //走子参与成项，更新执手方removes
+                //走子参与成项，且敌子有子可消，更新执手方removes
+                if (this.isItemPoint(action.target) && this.isRemovable(-holder.type)) { 
                     let removes = Utils.dotProduct(Object.values(this.getItems(action.target)), Object.values(this.rule));
                     this.setPlayerRemoves(holder, removes);
-                } else { //走子不参与成项，切换玩家
+                } else { //走子不参与成项 或没有敌子可消，切换玩家
                     this.shiftHolder();
                 }
             }
