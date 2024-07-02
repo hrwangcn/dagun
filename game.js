@@ -174,9 +174,9 @@ class Game {
             this.board[location] === -this.getHolder().type) {
             return new Action({ type: Action.REMOVE, target: location });
         }
-        //选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军，location可行
-        if (this.stage === Game.MOVING &&
-            this.walker === -1 && this.isMovablePoint(location) &&
+        //选中棋子待行，Game处于MOVING阶段，Game.walker为-1，board此处是友军，location可行，holder不提子
+        if (this.stage === Game.MOVING && this.walker === -1 &&
+            this.getHolder().removes === 0 && this.isMovablePoint(location) &&
             this.board[location] === this.getHolder().type) {
             return new Action({ type: Action.SELECT, target: location });
         }
@@ -290,12 +290,6 @@ class Game {
         let whites = this.findAllLocation(Player.WHITE);
         //落子阶段确认赢家，一方的棋子个数大于13个
         if (this.stage === Game.APPEND) {
-            if (blacks.length > 13) {
-                return this.getPlayerByType(Player.BLACK);
-            }
-            if (whites.length > 13) {
-                return this.getPlayerByType(Player.WHITE);
-            }
             return null;
         }
 
