@@ -95,7 +95,6 @@ class Player {
     constructor(type, isHolding) {
         this.type = type;
         this.removes = 0; //剩余摘子次数
-        this.isWinner = false; //是否赢得了本场游戏
         this.isHolding = isHolding; //处于执手状态
     }
 }
